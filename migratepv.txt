@@ -1,0 +1,36 @@
+https://access.redhat.com/solutions/3181101
+
+oc project default
+
+### Confirm old PVC name and volume name (in this case registry and registry-storage)
+oc get pvc
+oc set volume dc docker-registry
+
+### Make sure to stop docker-registry and no write during migration
+oc scale dc docker-registry --replicas=0
+
+### Spawn no-op container for the storage maintenance
+oc run sleep --image=registry.access.redhat.com/rhel7/rhel-tools -- tail -f /dev/null
+
+### Mount old PVC to that container
+oc set volume dc/sleep --add -t pvc --name=registry --claim-name=registry --mount-path=/old-registry
+
+### Create and mount new PV/PVC to that container.
+### If you don't enable dynamic provisioning you need to create PV manually prior to this step
+oc set volume dc/sleep --add -t pvc --name=new-registry --claim-name=new-registry --mount-path=/new-registry --claim-mode=ReadWriteMany --claim-size=400Gi
+
+### rsh into the container
+oc rsh sleep-X-XXXXX
+
+### Migrate data to the new storage
+rsync -avxHAX --progress /old-registry/* /new-registry
+
+### The last step, you need to switch to the new storage volume in docker-registry:
+oc set volume dc/docker-registry --remove --name=registry-storage
+oc set volume dc/docker-registry --add -t pvc --name=registry-storage --claim-name=new-registry --mount-path=/registry
+
+### Restart docker-registry
+oc scale dc docker-registry --replicas=1
+
+### Remove maintenance pod
+oc delete dc sleep
