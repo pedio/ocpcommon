@@ -10,7 +10,7 @@ oc set volume dc docker-registry
 oc scale dc docker-registry --replicas=0
 
 ### Spawn no-op container for the storage maintenance
-oc run sleep --image=registry.access.redhat.com/rhel7/rhel-tools -- tail -f /dev/null
+oc run sleep --image=registry.access.redhat.com/rhel7 -- tail -f /dev/null
 
 ### Mount old PVC to that container
 oc set volume dc/sleep --add -t pvc --name=registry --claim-name=registry --mount-path=/old-registry
