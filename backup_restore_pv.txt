@@ -1,0 +1,66 @@
+https://access.redhat.com/solutions/3398261
+
+
+### backup
+oc project TARGET_PROJECT
+
+### Confirm current volume mount information
+$ oc set volume dc jenkins
+deploymentconfigs/jenkins
+  pvc/jenkins-data (allocated 10GiB) as jenkins-data
+    mounted at /var/lib/jenkins
+
+### Make sure to stop application and no write during backup
+$ oc scale dc jenkins --replicas=0
+
+### Spawn no-op container for the storage maintenance
+oc run sleep --image=registry.access.redhat.com/rhel7 -- tail -f /dev/null
+
+### Mount PVC to that container
+oc set volume dc sleep --add -t pvc --name=jenkins-data --claim-name=jenkins-data --mount-path=/var/lib/jenkins
+
+### (Optional) rsh into the container and make tar.gz archive
+### You can skip this step if you want to rsync the data directly, or no disk space available for the tar.gz archive
+oc rsh sleep-X-XXXXX
+mkdir /tmp/backup
+cd /tmp/backup
+tar czf data.tar.gz -C /var/lib/jenkins/ .
+exit
+
+### rsync data from the pod
+oc rsync sleep-X-XXXXX:/tmp/backup .
+
+### Restart application pod and remove maintenance pod if needed
+oc scale dc jenkins --replicas=1
+oc delete dc sleep
+
+## restore
+oc project TARGET_PROJECT
+
+### Confirm current volume mount information
+$ oc set volume dc jenkins
+deploymentconfigs/jenkins
+  pvc/jenkins-data (allocated 10GiB) as jenkins-data
+    mounted at /var/lib/jenkins
+
+### Make sure to stop application and no write during backup
+$ oc scale dc jenkins --replicas=0
+
+### Spawn no-op container for the storage maintenance
+oc run sleep --image=registry.access.redhat.com/rhel7 -- tail -f /dev/null
+
+### Mount PVC to that container
+oc set volume dc sleep --add -t pvc --name=jenkins-data --claim-name=jenkins-data --mount-path=/var/lib/jenkins
+
+### rsync data to the pod
+oc rsync ./backup sleep-X-XXXXX:/tmp/
+
+### rsh into the container and restore backup
+oc rsh sleep-X-XXXXX
+cd /var/lib/jenkins
+tar xf /tmp/backup/data.tar.gz
+exit
+
+### Restart application pod and remove maintenance pod if needed
+oc scale dc jenkins --replicas=1
+oc delete dc sleep
