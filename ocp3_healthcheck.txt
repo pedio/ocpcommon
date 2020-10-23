@@ -25,3 +25,8 @@ PRD environment only:
 a. proxy access (Intranet / Internet URLs need to define)
 b. enpoints healthcheck (need to define)
 c. persistent volumes
+
+
+
+oc get node | awk 'NR>1 {print $1}' | xargs oc describe node | grep -Ei '^name:|KernelDeadlock|OutOfDisk|MemoryPressure|DiskPressure|PIDPressure|Ready'
+
