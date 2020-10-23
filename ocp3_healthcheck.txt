@@ -1,0 +1,27 @@
+Task list:
+1) comparison of existing minor release and latest 3.11 minor release
+
+2) 3 OCP 3.11 environments
+OpenShift cluster health check checklist:
+-OpenShift Version
+-OpenShift Implementation Verification
+-OpenShift Cluster Host Health(kubelet)
+-OpenShift Cluster Etcd Health
+-OpenShift Cluster Node Usage (CPU/Memory)
+-OpenShift Cluster Node Condition
+-OpenShift Cluster Router Health
+-OpenShift Cluster Registry Health
+-OpenShift Cluster API/Controller/Scheduler Health
+-OpenShift Cluster Controller Role Verification
+-OpenShift Cluster Logging Health (EFK)
+-OpenShift Cluster Monitoring Health
+-OpenShift Cluster Persistent Storage
+-OpenShift Cluster Authentication/Authorization
+-OpenShift Cluster Container Runtime
+
+PRD environment only:
+3) Openshift upgrade verification
+4) User deployed applications healthcheck
+a. proxy access (Intranet / Internet URLs need to define)
+b. enpoints healthcheck (need to define)
+c. persistent volumes
